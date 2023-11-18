@@ -1,12 +1,15 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 
+import { PrismaClient } from '@prisma/client';
+
 async function main(maxPages = 50) {
+    const prisma = new PrismaClient();
     // initialized with the initial webpage to visit
     const paginationURLsToVisit = ["https://scrapeme.live/shop"];
     const visitedURLs:Array<string> = [];
 
-    const productURLs = new Set();
+    const products = new Set();
 
     // iterating until the queue is empty
     // or the iteration limit is hit
@@ -17,9 +20,9 @@ async function main(maxPages = 50) {
         // the current url to crawl
         const paginationURL = paginationURLsToVisit.pop();
 
-        // if the queue is empty, break the loop
+        // if the queue is empty, skip the current iteration and continue the loop
         if (paginationURL === undefined) {
-            break;
+            continue;
         }
 
         // retrieving the HTML content from paginationURL
@@ -36,7 +39,7 @@ async function main(maxPages = 50) {
         $(".page-numbers a").each((index, element) => {
             const paginationURL = $(element).attr("href");
 
-            // if the queue is empty, break the loop
+            // if the queue is empty, skip to the next element in the loop
             if (paginationURL === undefined) {
                 return;
             }
@@ -50,16 +53,55 @@ async function main(maxPages = 50) {
             }
         });
 
+        console.log('Adding products...');
         // retrieving the product URLs
         $("li.product a.woocommerce-LoopProduct-link").each((index, element) => {
             const productURL = $(element).attr("href");
-            productURLs.add(productURL);
-            console.log(`Added: ${productURL}`);
+            const productImg = $(element).find("img").attr("src");
+            const productName = $(element).find("h2").text();
+            const productPrice = $(element).find(".woocommerce-Price-amount").text();
+            const productPriceCurrency = $(element).find(".woocommerce-Price-currencySymbol").text();
+
+            const product = {
+                name: productName,
+                price: productPrice.replaceAll(productPriceCurrency, ""),
+                currency: productPriceCurrency,
+                image: productImg,
+                url: productURL
+            }
+
+            products.add(product);
+
+            if (productURL === undefined) {
+                return;
+            }
+
+            const addData = async (data: typeof product) => {
+                await prisma.scrappedData.upsert({
+                    where: {
+                        url: data.url,
+                    },
+                    create: {
+                        url: data.url,
+                        price: parseFloat(data.price),
+                        data: JSON.stringify(data),
+                    },
+                    update: {
+                        price: parseFloat(data.price),
+                        data: JSON.stringify(data),
+                    }
+                })
+            }
+
+            addData(product);
+
+            // console.log(`Added: ${JSON.stringify(product, undefined, 2)}`);
         });
     }
 
     // logging the crawling results
-    console.log([...productURLs]);
+    // console.log([...products]);
+    console.log('Products added.');
 
     // use productURLs for scraping purposes...
 }
