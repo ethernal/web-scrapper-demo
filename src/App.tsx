@@ -1,33 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// import './App.css';
 
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+
+type Product = {
+    id: string;
+    url: string;
+    price: number;
+    data: string;
+    dataType: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
 function App() {
-  const [count, setCount] = useState(0)
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const products = (await axios.get('http://localhost:3213/api/products')).data;
+
+      console.log('products', products);
+      setProducts(products);
+    }
+
+    fetchData();
+  },[])
+
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      <div className='w-full grid grid-cols-3 gap-4'>
+        {products?.map((data) =>  {
+
+          const metadata = JSON.parse(data.data);
+          return (
+          <div key={data.url}>
+            <h1>{metadata.name}</h1>
+            <img src={metadata.image} alt={metadata.name} />
+            <p>{metadata.currency}{data.price}</p>
+          </div>
+        )
+        }
+        )}
+
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
