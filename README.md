@@ -1,30 +1,31 @@
-# React + TypeScript + Vite
+# Demo project for scrapping website data
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a demo project that shows how to scrape data from an external website, save it to local database and then serve data from local API express server and display it to the user using React frontend.
 
-Currently, two official plugins are available:
+# Running
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Clone the project.
+2. Install dependencies with `npm`:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```bash
+npm install
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+3. Run scrapper
+```bash
+  npm run scrap
+```
+4. Run the API server
+```bash
+  npm run server
+```
+6. Run the frontend
+```bash
+  npm run dev
+```
+
+7. Visit the site at: http://localhost:5173 (Vite default)
+
+You can adjust the price limit for items to be displayed. It uses local database so it will be fast and requests are debounced so it will also limit the IO.
+
+![Frontend of the application](image.png)
