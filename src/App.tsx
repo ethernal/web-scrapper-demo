@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useDebounce } from 'usehooks-ts';
 
 type Product = {
     id: string;
@@ -14,21 +15,36 @@ type Product = {
 }
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [maxPrice, setMaxPrice] = useState(80);
+  const debouncedMaxPrice = useDebounce(maxPrice, 50);
 
   useEffect(() => {
     const fetchData = async () => {
-      const products = (await axios.get('http://localhost:3213/api/products?price_lte=100')).data;
+      const products = (await axios.get(`http://localhost:3213/api/products?price_lte=${debouncedMaxPrice}`)).data;
 
       console.log('products', products);
       setProducts(products);
     }
 
     fetchData();
-  },[])
+  },[debouncedMaxPrice])
 
 
   return (
     <>
+      <div className='flex justify-center items-baseline gap-2 py-4'>
+        <label className='text-2xl font-bold' htmlFor='max-price'>Max Price: </label>
+        <input
+          id='max-price'
+          type="range"
+          min={25}
+          max={200}
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+          className="w-1/2"
+        />
+        <p className='text-2xl font-bold'>{maxPrice}</p>
+      </div>
       <div className='w-full grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 p-8'>
         {products?.map((data) =>  {
 

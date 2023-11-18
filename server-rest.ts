@@ -10,11 +10,17 @@ app.use(cors());
 
 app.get('/api/products', async (req, res) => {
 
+  const maxPrice = parseInt(req.query.price_lte) ?? 100;
+
+  console.log('maxPrice', maxPrice);
+
+
+
   const fetchData = async () => {
       const prisma = new PrismaClient();
       const data = await prisma.scrappedData.findMany({where:{
         price: {
-          lte: 100
+          lte: maxPrice
         }
       }});
       return data;
