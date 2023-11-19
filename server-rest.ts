@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './src/lib/prisma';
 
 const PORT = process.env.PORT || 3213;
 
@@ -11,20 +11,25 @@ app.use(cors());
 app.get('/api/products', async (req, res) => {
 
   const maxPrice = parseInt(req.query.price_lte) ?? 100;
+  const sortBy = req.query.sortBy ?? '';
+  const sortOrder = req.query.sortOrder;
 
-  console.log('maxPrice', maxPrice);
 
+  const sortByQuery = req.query.sortBy !== '' ? {
+    orderBy: {
+      [sortBy]: sortOrder
+    }
+  } : undefined;
 
 
   const fetchData = async () => {
-      const prisma = new PrismaClient();
       const data = await prisma.scrappedData.findMany({where:{
         price: {
           lte: maxPrice
         }
-      }, orderBy: {
-        price: 'asc'
-      }
+      },
+      ...sortByQuery
+
     });
       return data;
     }
