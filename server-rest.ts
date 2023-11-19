@@ -22,7 +22,10 @@ app.get('/api/products', async (req, res) => {
         price: {
           lte: maxPrice
         }
-      }});
+      }, orderBy: {
+        price: 'asc'
+      }
+    });
       return data;
     }
 
