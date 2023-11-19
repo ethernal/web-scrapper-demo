@@ -100,7 +100,6 @@ async function main(maxPages = 50) {
     }
 
     // logging the crawling results
-    // console.log([...products]);
     console.log('Products added.');
 
     // use productURLs for scraping purposes...
