@@ -19,14 +19,22 @@ function App() {
   const debouncedMaxPrice = useDebounce(maxPrice, 50);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+
     const fetchData = async () => {
-      const products = (await axios.get(`http://localhost:3213/api/products?price_lte=${debouncedMaxPrice}`)).data;
+      const products = (await axios.get(`http://localhost:3213/api/products?price_lte=${debouncedMaxPrice}`,{signal:signal})).data;
 
       console.log('products', products);
       setProducts(products);
     }
 
     fetchData();
+
+    return () => {
+      controller.abort();
+    }
   },[debouncedMaxPrice])
 
 
