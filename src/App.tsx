@@ -16,10 +16,11 @@ type Product = {
 function App() {
   // use search url params to set initial data for the state
   const searchParams = new URLSearchParams(window.location.search);
+  const priceFromURL = isNaN(parseInt(searchParams.get('price_lte'))) ? 80 : parseInt(searchParams.get('price_lte')!);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [sortOptions, setSortOptions] = useState({sortBy: searchParams.get('sortBy') || '', sortOrder: searchParams.get('sortOrder') || ''});
-  const [maxPrice, setMaxPrice] = useState(parseInt(searchParams.get('price_lte') ?? '') ?? 80);
+  const [maxPrice, setMaxPrice] = useState(priceFromURL);
   const debouncedMaxPrice = useDebounce(maxPrice, 50);
 
   useEffect(() => {
@@ -27,9 +28,6 @@ function App() {
     const signal = controller.signal;
 
     const fetchData = async () => {
-
-      console.log('debouncedMaxPrice', debouncedMaxPrice);
-
       // create a query string based on the parameters passed
       // if any of the parameters is empty then don't add it to the query string
       const price_lte = 'price_lte=' + debouncedMaxPrice.toString();
@@ -42,8 +40,6 @@ function App() {
 
       // these parameters should be part of the QueryParams on the frontend as well that way client can share the link
       // with current state of the application: use URLSearchParams
-
-      console.log('Query Params', queryParams);
       history.pushState(queryParams, '', `?${queryParams}`);
 
       const products = (
@@ -108,6 +104,8 @@ function App() {
           <p className='text-2xl font-bold'>Total Products: {products?.length}</p>
         </div>
       </div>
+
+      {/* Products List */}
       <div className='w-full grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 p-8'>
         {products?.map((data) =>  {
 
