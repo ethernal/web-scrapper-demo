@@ -1,5 +1,3 @@
-// import './App.css';
-
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'usehooks-ts';
@@ -42,6 +40,19 @@ function App() {
       // with current state of the application: use URLSearchParams
       history.pushState(queryParams, '', `?${queryParams}`);
 
+      // the code below will prevent axios from throwing primise error (CanceledError) in the console when fetch is cancelled.
+      // see answer by [Scott McAlister](https://stackoverflow.com/users/8288828/scott-mcallister) on [StackOverflow]() https://stackoverflow.com/questions/73140563/axios-throwing-cancelederror-with-abort-controller-in-react)
+      axios.interceptors.response.use(
+          (response) => response,
+          (error) => {
+            if (error.code === "ERR_CANCELED") {
+              // aborted in useEffect cleanup
+              return Promise.resolve({status: 499})
+            }
+            return Promise.reject((error.response && error.response.data) || 'Error')
+          }
+        );
+
       const products = (
         await axios.get(`http://localhost:3213/api/products?${queryParams}`,{signal:signal})).data;
 
@@ -52,6 +63,7 @@ function App() {
     fetchData();
 
     return () => {
+      console.log('Aborting fetch..')
       controller.abort();
     }
   },[debouncedMaxPrice, sortOptions.sortBy, sortOptions.sortOrder])

@@ -1,15 +1,45 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
+import fs from 'fs';
+import path from 'path';
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './src/lib/prisma';
+
+async function downloadFiles(downloadFiles: Array<string>) {
+  console.log(`Starting download of ${downloadFiles.length} files. This will take few minutes. Please be patient...`);
+
+  let fileDownloadCount = 0;
+
+  for (const link of downloadFiles) {
+    // console.log("Downloading file: ", path.basename(link));
+
+    const name = path.basename(link);
+    const url = link
+    const file = fs.createWriteStream(`./public/images/${name}`)
+
+    const response = await axios({
+      url,
+      method: 'GET',
+      responseType: 'stream'
+    });
+    response.data.pipe(file);
+    file.on('finish',() => {
+        file.close();
+        fileDownloadCount++;
+        // console.log(`Download of ${name} completed`);
+    })
+  }
+  console.log(`Finished downloading ${fileDownloadCount} of {downloadFiles.length} files.`);
+}
 
 async function main(maxPages = 50) {
-    const prisma = new PrismaClient();
+
     // initialized with the initial webpage to visit
     const paginationURLsToVisit = ["https://scrapeme.live/shop"];
     const visitedURLs:Array<string> = [];
 
     const products = new Set();
+    const imageSrc = new Set<string>();
 
     // iterating until the queue is empty
     // or the iteration limit is hit
@@ -53,7 +83,7 @@ async function main(maxPages = 50) {
             }
         });
 
-        console.log('Adding products...');
+        console.log('Adding products from: ', paginationURL);
         // retrieving the product URLs
         $("li.product a.woocommerce-LoopProduct-link").each((index, element) => {
             const productURL = $(element).attr("href");
@@ -62,11 +92,18 @@ async function main(maxPages = 50) {
             const productPrice = $(element).find(".woocommerce-Price-amount").text();
             const productPriceCurrency = $(element).find(".woocommerce-Price-currencySymbol").text();
 
+            if (productImg !== undefined) {
+                imageSrc.add(productImg);
+            }
+
+            // when using vite relative path files are served from the public folder by default so there is no need to add the folder to the path - it will produce a warning in the console
+            const localProductImg = (productImg !== undefined) ? `./images/${path.basename(productImg)}` : productImg;
+
             const product = {
                 name: productName,
                 price: productPrice.replaceAll(productPriceCurrency, ""),
                 currency: productPriceCurrency,
-                image: productImg,
+                image: localProductImg,
                 url: productURL
             }
 
@@ -101,6 +138,9 @@ async function main(maxPages = 50) {
 
     // logging the crawling results
     console.log('Products added.');
+    console.log('Downloading images...');
+    await downloadFiles(Array.from(imageSrc));
+    console.log('Done!');
 
     // use productURLs for scraping purposes...
 }
